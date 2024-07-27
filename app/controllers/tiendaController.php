@@ -4,7 +4,7 @@ require_once './models/tienda.php';
 class TiendaController 
 {
     public function cargarUno($request, $response, $args){
-    
+
         $parametros = $request->getParsedBody();
 
         $nombre = $parametros['nombre'];
@@ -14,50 +14,44 @@ class TiendaController
         $color = $parametros['color'];
         $stock = $parametros['stock'];
 
-        $tienda = new Tienda();
-        $tienda->nombre = $nombre;
-        $tienda->precio = $precio;
-        $tienda->tipo = $tipo;
-        $tienda->talle = $talle;
-        $tienda->color = $color;
-        $tienda->stock = $stock;    
-
-        $payload = ["mensaje" => "No se pudo crear la tienda"];
-        
-        if ($tienda->cargarProducto() != null) {
-            $payload = ["mensaje" => "Tienda creada/actualizada con éxito"];           
-            if (isset($_FILES['foto'])) {
-                $resultadoGuardado = $this->guardarImagenTienda($nombre, $tipo, $_FILES['foto']);
-                
-                if ($resultadoGuardado !== true) {
-                    $payload['mensaje'] = "Tienda creada, pero hubo un error al cargar la imagen: $resultadoGuardado";
-                } else {                    
-                    $tienda->foto = $nombre . '_' . $tipo . '.jpg';                    
-                    if ($tienda->cargarProducto() != null) {
-                        $payload['mensaje'] = "Tienda e imagen creadas con éxito";
-                    } else {
-                        $payload['mensaje'] = "Tienda creada, pero hubo un error al guardar la ruta de la imagen en la base de datos";
-                    }
-                }
+        $producto = new Tienda();
+        $producto->nombre = $nombre;
+        $producto->precio = $precio;
+        $producto->tipo = $tipo;
+        $producto->talle = $talle;
+        $producto->color = $color;
+        $producto->stock = $stock;
+     
+        $archivo = isset($_FILES['foto']) ? $_FILES['foto'] : null;
+        if ($archivo) {
+            $tempFilePath = $archivo['tmp_name']; //Ruta temporal del archivo
+            $nombreImagen = $producto->nombre . '_' . $producto->tipo . '.jpg';
+            $guardadoImagen = Tienda::guardarImagen("ImagenesDeRopa/2024/", $nombreImagen, $tempFilePath);
+            if ($guardadoImagen) {
+                $producto->foto = $nombreImagen;
+            } else {
+                $payload = json_encode(array("mensaje" => "Se cargó el producto pero hubo un error al cargar la imagen"));
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json');
             }
         }
 
-        $response->getBody()->write(json_encode($payload));
+        if($producto->cargarProducto() != null)
+        {
+          $payload = json_encode(array("mensaje" => "Producto creado con éxito"));
+          if ($archivo) {
+              $payload = json_encode(array("mensaje" => "Producto e imagen creados con éxito"));
+          }
+        }
+        else
+        {
+          $payload = json_encode(array("mensaje" => "No se pudo cargar el producto"));
+        }
+
+        $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json');
-}
-
-private function guardarImagenTienda($nombre, $tipo, $archivo)
-{
-    $tempFilePath = $archivo['tmp_name'];
-    $directorioDestino = "ImagenesDeRopa/2024/";
-    $nombreArchivo = $nombre . '_' . $tipo . '.jpg';
-
-    if (move_uploaded_file($tempFilePath, $directorioDestino . $nombreArchivo)) {
-        return true;
-    } else {
-        return "Error al guardar la imagen";
     }
-}
+
 
 public function consularProducto($request, $response, $args)
 {

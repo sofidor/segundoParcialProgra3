@@ -10,8 +10,7 @@ class VentasController
         $nombre = $parametros['nombre'];
         $tipo = $parametros['tipo'];
         $talle = $parametros['talle'];
-        $stock = $parametros['stock'];       
-        $precio = $parametros['precio'];
+        $stock = $parametros['stock'];        
      
         $venta = new Venta();
         $venta->email = $email;
@@ -19,32 +18,191 @@ class VentasController
         $venta->tipo = $tipo;
         $venta->talle = $talle;
         $venta->stock = $stock;       
-        $venta->precio = $precio;
+       
 
-        if($venta->crearVenta())
+        $archivo = isset($_FILES['foto']) ? $_FILES['foto'] : null;
+        if ($archivo) {
+            $tempFilePath = $archivo['tmp_name']; //Ruta temporal del archivo
+            $fecha_actual = date('d-m-Y');       
+            $parts = explode('@', $email);        
+            $email_recortado = $parts[0]; 
+            $nombreImagen = $venta->nombre . '_' . $venta->tipo . '_' . $venta->talle . '_' . $email_recortado . '_'. $fecha_actual .'.jpg';
+            $guardadoImagen = Venta::guardarImagenVenta("ImagenesDeVenta/2024/", $nombreImagen, $tempFilePath);
+            if ($guardadoImagen) {
+                $venta->foto = $nombreImagen;
+            } else {
+                $payload = json_encode(array("mensaje" => "Se cargó el venta pero hubo un error al cargar la imagen"));
+                $response->getBody()->write($payload);
+                return $response->withHeader('Content-Type', 'application/json');
+            }
+        }
+
+        if($venta->crearVenta() != null)
         {
-            $archivo = isset($_FILES['foto']) ? $_FILES['foto'] : null;
-            $tempFilePath = $archivo['tmp_name']; // Ruta temporal del archivo
-
-            $imagenGuardada = Venta::guardarImagenVenta("ImagenesDeVenta/2024/", $venta->nombre, $venta->tipo, $venta->talle, $venta->email, $tempFilePath);
-            if($imagenGuardada != false)
-            {
-                $payload = json_encode(array("mensaje" => "Se creo la venta y se guardo la imagen"));
-            }
-            else
-            {
-                $payload = json_encode(array("mensaje" => "Se creo la venta pero no se pudo guardar la imagen"));
-            }
+          $payload = json_encode(array("mensaje" => "venta creado con éxito"));
+          if ($archivo) {
+              $payload = json_encode(array("mensaje" => "venta e imagen creados con éxito"));
+          }
         }
         else
         {
-            $payload = json_encode(array("mensaje" => "No se encontro el producto"));
+          $payload = json_encode(array("mensaje" => "No se pudo cargar la venta"));
         }
 
         $response->getBody()->write($payload);
-        return $response
-          ->withHeader('Content-Type', 'application/json');
+        return $response->withHeader('Content-Type', 'application/json');
+  }
+
+  public function modificarVenta($request, $response, $args) 
+  {
+    $parametros = $request->getParsedBody();
+
+    // Verificación de los parámetros
+    $requiredParams = ['nroPedido', 'email', 'nombre', 'tipo', 'talle', 'stock'];
+    $missingParams = [];
+
+    foreach ($requiredParams as $param) {
+        if (!isset($parametros[$param])) {
+            $missingParams[] = $param;
+        }
     }
+
+    if (!empty($missingParams)) {
+        $payload = json_encode(array("error" => "Faltan los siguientes parámetros: " . implode(', ', $missingParams)));
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    $nroPedido = $parametros['nroPedido'];
+    $email = $parametros['email'];
+    $nombre = $parametros['nombre'];
+    $tipo = $parametros['tipo'];
+    $talle = $parametros['talle'];
+    $stock = $parametros['stock'];
+
+    $rta = Venta::modificarVenta($nroPedido, $email, $nombre, $tipo, $talle, $stock);
+    if ($rta) {
+        $payload = json_encode(array("mensaje" => "Venta modificada con éxito"));
+    } else {
+        $payload = json_encode(array("error" => "No existe el número del pedido"));
+    }
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+  }
+
+  public function traerVentaParticular($request, $response, $args)
+  {
+    $parametros = $request->getQueryParams();
+    $fecha = $parametros['fecha'] ?? null;
+
+    if (!$fecha) {
+        $fecha = date('Y-m-d', strtotime('-1 day'));
+    }
+
+    $lista = Venta::obtenerVentaParticular($fecha);
+
+    if (empty($lista)) {
+        $payload = json_encode(array("ventas" => 'No hay ventas realizadas el dia de ayer'));
+    } else {
+        $payload = json_encode(array("ventas" => $lista));
+    }
+
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+}
+
+public function traerVentasPorUsuario($request, $response, $args)
+{
+    $email = isset($_GET['email']) ? $_GET['email'] : null;
+    $lista = Venta::obtenerVentasUsuario($email);
+    $payload = json_encode(array("Lista Ventas" => $lista));
+
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+}
+
+public function traerVentasPorProducto($request, $response, $args)
+{
+    $tipo = isset($_GET['tipo']) ? $_GET['tipo'] : null;
+    $lista = Venta::obtenerVentasPorTipo($tipo);
+    $payload = json_encode(array("Lista Ventas" => $lista));
+
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+}
+
+public function traerVentasEntreValores($request, $response, $args)
+{
+  $parametros = $request->getQueryParams();
+  $valor1 = $parametros['valor1'] ?? null;
+  $valor2 = $parametros['valor2'] ?? null;
+
+  if ($valor1 === null || $valor2 === null) {
+      $payload = json_encode(array("error" => "Debe proporcionar ambos valores"));
+      $response->getBody()->write($payload);
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+  }
+
+  $lista = Venta::obtenerVentasEntreValores($valor1, $valor2);
+
+  if (empty($lista)) {
+      $payload = json_encode(array("mensaje" => "No hay ventas dentro del rango especificado"));
+  } else {
+      $payload = json_encode(array("Lista Ventas" => $lista));
+  }
+
+  $response->getBody()->write($payload);
+  return $response->withHeader('Content-Type', 'application/json');
+}
+
+public function traerVentasPorIngresos($request, $response, $args)
+{
+    $diaParticular = isset($_GET['diaParticular']) ? $_GET['diaParticular'] : null;
+    $lista = Venta::obtenerIngresosPorDia($diaParticular);
+
+    $preciosAcumulados = [];
+
+    foreach ($lista as $venta) 
+    {
+        $fecha = $venta["fecha"];
+        $precio = $venta["precio"];
+        
+        if (isset($preciosAcumulados[$fecha])) 
+        {
+            $preciosAcumulados[$fecha] += $precio;
+        } else 
+        {
+            $preciosAcumulados[$fecha] = $precio;
+        }
+    }
+    
+    $listaPrecioAcumulablePorFecha = [];
+    foreach ($preciosAcumulados as $fecha => $precio) 
+    {
+        $listaPrecioAcumulablePorFecha[] = ["Fecha" => $fecha, "Total" => $precio];
+    }
+    
+    $payload = json_encode(array("Lista ganancias por dia" => $listaPrecioAcumulablePorFecha));
+    $response->getBody()->write($payload);
+    return $response
+      ->withHeader('Content-Type', 'application/json');
+}
+
+public function traerProductoMasVendido($request, $response, $args)
+{
+  $resultado = Venta::obtenerProductoMasVendido();
+
+  if ($resultado['mensaje']) {
+      $payload = json_encode(array("mensaje" => $resultado['mensaje']));
+  } else {
+      $payload = json_encode(array("Producto mas vendido" => $resultado['producto']));
+  }
+
+  $response->getBody()->write($payload);
+  return $response->withHeader('Content-Type', 'application/json');
+}
+
+          
 
     public function guardarCSV($request, $response, $args) 
     {

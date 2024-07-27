@@ -76,11 +76,12 @@ class Tienda
         $stockAnterior = Tienda::obtenerStock($this->nombre, $this->tipo);
         $nuevoStock = $this->stock + $stockAnterior;
 
-        $consulta = $objAccesoDb->RetornarConsulta("UPDATE tienda SET precio = :precio, stock = :stock WHERE nombre = :nombre AND tipo = :tipo");
+        $consulta = $objAccesoDb->RetornarConsulta("UPDATE tienda SET precio = :precio, stock = :stock , foto = :foto WHERE nombre = :nombre AND tipo = :tipo");
         $consulta->bindValue(':precio', $this->precio, PDO::PARAM_INT);
         $consulta->bindValue(':stock', $nuevoStock, PDO::PARAM_INT);
         $consulta->bindValue(':nombre', $this->nombre, PDO::PARAM_STR);
         $consulta->bindValue(':tipo', $this->tipo, PDO::PARAM_STR);
+        $consulta->bindValue(':foto', $this->foto, PDO::PARAM_STR);
         $consulta->execute();
     }
 
@@ -90,7 +91,7 @@ class Tienda
         $stockAnterior = Tienda::obtenerStock($nombre, $tipo);
         $nuevoStock = $stockAnterior - $stock;
 
-        $consulta = $objAccesoDatos->RetornarConsulta("UPDATE tienda SET stock = :stock WHERE nombre = :nombre AND tipo = :tipo AND talle = :talle");
+        $consulta = $objAccesoDb->RetornarConsulta("UPDATE tienda SET stock = :stock WHERE nombre = :nombre AND tipo = :tipo AND talle = :talle");
         $consulta->bindValue(':stock', $nuevoStock, PDO::PARAM_INT);
         $consulta->bindValue(':nombre', $nombre, PDO::PARAM_STR);
         $consulta->bindValue(':tipo', $tipo, PDO::PARAM_STR);
@@ -98,11 +99,11 @@ class Tienda
         $consulta->execute();
     }
 
-    public static function guardarImagen($path, $nombre, $tipo, $tempName)
+    public static function guardarImagen($path, $nombre, $tempName)
     {
         $rta = false;
         // Ruta a donde se quiere mover el archivo
-        $destino = $path . $nombre . " - " . $tipo . ".png";
+        $destino = $path . $nombre;
         
         if(move_uploaded_file($tempName, $destino))
         {
