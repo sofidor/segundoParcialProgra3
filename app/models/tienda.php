@@ -175,6 +175,29 @@ class Tienda
         return $rta;
     }
 
+    public static function obtenerOrdenados($ordenarPor)
+    {
+        $objAccesoDb = AccesoDb::dameUnObjetoAcceso();
+        $consulta = $objAccesoDb->RetornarConsulta("SELECT * FROM tienda ORDER BY $ordenarPor");
+        $consulta->execute();
+        return $consulta->fetchAll(PDO::FETCH_CLASS, 'Tienda');
+    }
+
+    public static function obtenerMenosVendido()
+    {
+        $objAccesoDb = AccesoDb::dameUnObjetoAcceso();
+        $consulta = $objAccesoDb->RetornarConsulta("
+            SELECT p.*, COUNT(v.nombre) as ventas 
+            FROM tienda p 
+            LEFT JOIN ventas v ON p.nombre = v.nombre
+            GROUP BY p.nombre
+            ORDER BY ventas ASC 
+            LIMIT 1
+        ");
+        $consulta->execute();
+        return $consulta->fetch(PDO::FETCH_ASSOC);
+    }
+
 
     
 

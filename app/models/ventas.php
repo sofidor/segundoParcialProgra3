@@ -75,8 +75,8 @@ class Venta
 
     public static function obtenerTodos()
     {
-        $objAccesoDatos = AccesoDatos::obtenerInstancia();
-        $consulta = $objAccesoDatos->prepararConsulta("SELECT * FROM ventas");
+        $objAccesoDb = AccesoDb::dameUnObjetoAcceso();
+        $consulta = $objAccesoDb->RetornarConsulta("SELECT * FROM ventas");
         $consulta->execute();
 
         return $consulta->fetchAll(PDO::FETCH_CLASS, 'Venta');
@@ -111,7 +111,7 @@ class Venta
 
             $rta = true;
         }
-        else
+        else 
         {
             $rta = false;
         }

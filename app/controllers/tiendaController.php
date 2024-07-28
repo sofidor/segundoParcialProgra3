@@ -1,8 +1,8 @@
 <?php
 require_once './models/tienda.php';
 
-class TiendaController 
-{
+class TiendaController {
+    
     public function cargarUno($request, $response, $args){
 
         $parametros = $request->getParsedBody();
@@ -73,6 +73,32 @@ public function consularProducto($request, $response, $args)
     return $response
       ->withHeader('Content-Type', 'application/json');
 }
+
+public function traerPorStock($request, $response, $args){
+    $lista = Tienda:: obtenerOrdenados('stock');
+    $payload = json_encode($lista);
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+}
+
+public function traerPorPrecio($request, $response, $args){
+    $lista = Tienda:: obtenerOrdenados('precio');
+    $payload = json_encode($lista);
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+}
+
+public function traerMenosVendido($request, $response, $args)
+{
+    $producto = Tienda::obtenerMenosVendido();
+    $payload = json_encode($producto);
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+}
+
+
+
+
 
 }
 
