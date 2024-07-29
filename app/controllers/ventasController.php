@@ -54,25 +54,41 @@ class VentasController
   }
 
   public function modificarVenta($request, $response, $args) 
-  {
-    $params = $request->getParsedBody();
+  {     
+     $putData = file_get_contents("php://input");     
+     $data = json_decode($putData, true); 
+     
+    $nroPedido = $data['nroPedido'] ?? null;
+    $email = $data['email'] ?? null;
+    $nombre = $data['nombre'] ?? null;
+    $tipo = $data['tipo'] ?? null;
+    $talla = $data['talla'] ?? null;
+    $stock = $data['stock'] ?? null;
 
-    $nroPedido = $params['nroPedido'];
-    $email = $params['email'];
-    $nombre = $params['nombre'];
-    $tipo = $params['tipo'];
-    $talle = $params['talle'];
-    $stock = $params['stock'];
-
-    $rta = Venta::modificarVenta($nroPedido, $email, $nombre, $tipo, $talle, $stock);
-    if ($rta) {
-        $payload = json_encode(array("mensaje" => "Venta modificada con éxito"));
-    } else {
-        $payload = json_encode(array("error" => "No existe el número del pedido"));
+    if(Venta::modificarVenta($nroPedido, $email,$nombre,$tipo,$talla,$stock)){        
+        $responseData = [
+            "mensaje" => "venta modificada con exito",
+            'nroPedido' => $nroPedido,
+            'email' => $email,
+            'nombre' => $nombre,
+            'tipo' => $tipo,
+            'talla' => $talla,
+            'stock' => $stock
+         ];
     }
-    $response->getBody()->write($payload);
+    else {
+        $responseData = ["mensaje" => "no se pudo moficiar la venta"];
+    }
+
+    $response->getBody()->write(json_encode($responseData));
     return $response->withHeader('Content-Type', 'application/json');
   }
+
+  public static function traerVentas()
+{   
+    $lista = Venta::obtenerVentas();
+    return $lista;
+}  
 
   public function traerVentaParticular($request, $response, $args)
   {

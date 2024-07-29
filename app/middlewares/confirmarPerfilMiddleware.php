@@ -40,95 +40,92 @@ class confirmarPerfilMiddleware{
 
     public static function verificarRolAdmin(Request $request, RequestHandler $handler) : Response
     {
-        $header = $request->getHeaderLine('Authorization');
-        $token = trim(explode("Bearer", $header)[1]);
+       $header = $request->getHeaderLine('Authorization');       
+       $token = trim(explode("Bearer", $header)[1]);
 
-        if($token!=null)
-        {
-            AutentificadorJWT::VerificarToken($token);
-            $parametros = (array)AutentificadorJWT::ObtenerData($token);
-    
-            $usuario = $parametros['tipoUsuario'];
-    
-            if ($usuario === '3') {
+       try{
+           AutentificadorJWT::VerificarToken($token);
+           $data = AutentificadorJWT::ObtenerData($token);            
+           $parametros = (array) $data;
+            $usuario = $parametros['tipoUsuario'] ?? null;
+
+            if ($usuario == '3') {                
+                $request->datosToken= $data;
                 $response = $handler->handle($request);
-            } else {
-                $response = new Response();
-                $payload = json_encode(array('mensaje' => 'Acceso denegado'));
-                $response->getBody()->write($payload);
-            }
+            } 
+            else
+            {
+                throw new Exception();
+            }          
         }
-        else
+        catch (Exception $e)
         {
             $response = new Response();
-            $payload = json_encode(array('error' => 'Token vacio'));
-            $response->getBody()->write($payload);
+            $payload = json_encode(array('mensaje' => 'ERROR: Usuario no autorizado'));
+            $response->getBody()->write( $payload);
         }
-
-
-        return $response->withHeader('Content-Type', 'application/json');
+             
+        return $response->withHeader('Content-Type','application/json');
     }
 
     public function verificarRolEmpleado(Request $request, RequestHandler $handler)
     {   
-        $header = $request->getHeaderLine('Authorization');
-        $token = trim(explode("Bearer", $header)[1]);
+        $header = $request->getHeaderLine('Authorization');       
+       $token = trim(explode("Bearer", $header)[1]);
 
-        if($token!=null)
-        {
-            AutentificadorJWT::VerificarToken($token);
-            $parametros = (array)AutentificadorJWT::ObtenerData($token);
-    
-            $usuario = $parametros['tipoUsuario'];
-    
-            if ($usuario === '2') {
+       try{
+           AutentificadorJWT::VerificarToken($token);
+           $data = AutentificadorJWT::ObtenerData($token);            
+           $parametros = (array) $data;
+            $usuario = $parametros['tipoUsuario'] ?? null;
+
+            if ($usuario == '2') {                
+                $request->datosToken= $data;
                 $response = $handler->handle($request);
-            } else {
-                $response = new Response();
-                $payload = json_encode(array('mensaje' => 'Acceso denegado'));
-                $response->getBody()->write($payload);
-            }
+            } 
+            else
+            {
+                throw new Exception();
+            }          
         }
-        else
+        catch (Exception $e)
         {
             $response = new Response();
-            $payload = json_encode(array('error' => 'Token vacio'));
-            $response->getBody()->write($payload);
+            $payload = json_encode(array('mensaje' => 'ERROR: Usuario no autorizado'));
+            $response->getBody()->write( $payload);
         }
-
-
-        return $response->withHeader('Content-Type', 'application/json');
+             
+        return $response->withHeader('Content-Type','application/json');
     }
 
     public function verificarAdminYEmpleado(Request $request, RequestHandler $handler)
     {   
-        $header = $request->getHeaderLine('Authorization');
+        $header = $request->getHeaderLine('Authorization');       
         $token = trim(explode("Bearer", $header)[1]);
-
-        if($token!=null)
-        {
+ 
+        try{
             AutentificadorJWT::VerificarToken($token);
-            $parametros = (array)AutentificadorJWT::ObtenerData($token);
-    
-            $usuario = $parametros['tipoUsuario'];
-    
-            if ($usuario === '3' || $usuario === '2') {
-                $response = $handler->handle($request);
-            } else {
-                $response = new Response();
-                $payload = json_encode(array('mensaje' => 'Acceso denegado'));
-                $response->getBody()->write($payload);
-            }
-        }
-        else
-        {
-            $response = new Response();
-            $payload = json_encode(array('error' => 'Token vacio'));
-            $response->getBody()->write($payload);
-        }
-
-
-        return $response->withHeader('Content-Type', 'application/json');
+            $data = AutentificadorJWT::ObtenerData($token);            
+            $parametros = (array) $data;
+             $usuario = $parametros['tipoUsuario'] ?? null;
+ 
+             if ($usuario == '2' || $usuario == '3') {                
+                 $request->datosToken= $data;
+                 $response = $handler->handle($request);
+             } 
+             else
+             {
+                 throw new Exception();
+             }          
+         }
+         catch (Exception $e)
+         {
+             $response = new Response();
+             $payload = json_encode(array('mensaje' => 'ERROR: Usuario no autorizado'));
+             $response->getBody()->write( $payload);
+         }
+              
+         return $response->withHeader('Content-Type','application/json');
     }
 
     

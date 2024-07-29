@@ -150,6 +150,15 @@ class Venta
         return $consulta->fetchAll(PDO::FETCH_CLASS, 'Venta');
     }
 
+    public static function obtenerVentas()
+    {
+        $objAccesoDb = AccesoDb::dameUnObjetoAcceso();
+        $consulta = $objAccesoDb->RetornarConsulta("SELECT * FROM ventas");
+        
+        $consulta->execute();
+        return $consulta->fetchAll(PDO::FETCH_CLASS, 'Venta');
+    }
+
     public static function obtenerVentasPorTipo($tipo)
     {
         $objAccesoDb = AccesoDb::dameUnObjetoAcceso();

@@ -79,6 +79,13 @@ class UsuarioController{
 
     }
 
+    
+  public static function traerusuarios()
+  {   
+      $lista = Usuario::obtenerUsuarios();
+      return $lista;
+  }  
+
 }
 
 ?>

@@ -62,6 +62,15 @@ class Usuario
 
         return $consulta->fetchAll(PDO::FETCH_CLASS, 'Usuario');
     }
+
+    public static function obtenerUsuarios()
+    {
+        $objAccesoDb = AccesoDb::dameUnObjetoAcceso();
+        $consulta = $objAccesoDb->RetornarConsulta("SELECT * FROM usuarios");
+        
+        $consulta->execute();
+        return $consulta->fetchAll(PDO::FETCH_CLASS, 'Usuario');
+    }
 }
 
 ?>
