@@ -33,7 +33,7 @@ $app->group('/tienda', function (RouteCollectorProxy $group) {
 
 //VENTAS
 $app->group('/ventas', function (RouteCollectorProxy $group) {
-    $group->post('/alta', \ventasController::class . ':cargarUna')->add(\tiendaMiddleware::class . ':existeStock');
+    $group->post('/alta', \ventasController::class . ':cargarUna')->add(\tiendaMiddleware::class . ':existeStock')->add(\tiendaMiddleware::class . ':verificarTipoYTalle');
     $group->get('/descargar', \ventasController::class . ':guardarCSV')->add(\confirmarPerfilMiddleware::class . ':verificarRolAdmin');
     $group->put('/modificar', \ventasController::class . ':modificarVenta')->add(\confirmarPerfilMiddleware::class . ':verificarRolAdmin');
 
@@ -49,7 +49,6 @@ $app->group('/ventas', function (RouteCollectorProxy $group) {
 
 //RECUPERATORIO
 $app->group('/recuperatorio', function (RouteCollectorProxy $group) {
-
     $group->group('/consultas/productos', function (RouteCollectorProxy $groupConsultar) {
         $groupConsultar->get('/porStock', \tiendaController::class . ':traerPorStock');
         $groupConsultar->get('/porPrecio', \tiendaController::class . ':traerPorPrecio');
@@ -61,18 +60,16 @@ $app->group('/recuperatorio', function (RouteCollectorProxy $group) {
 $app->post('/altaUsuario', \usuarioController::class . ':cargarUno')->add(\usuarioMiddleware::class . ':verificarPerfil');
 $app->post('/login', \usuarioController::class . ':loginUsuario')->add(\usuarioMiddleware::class . ':verificarPerfil');
 
-// Ruta para descargar el PDF con el listado de ventas
+// Descargar el PDF con el listado de ventas
 $app->get('/ventas/pdf', function (Request $request, Response $response, $args) {
     
     $ventas = ventasController::traerVentas(); 
     $nombreArchivo = "ventas.pdf";
-
-    // Crear el PDF
+    
     $pdf = new FPDF('L');
     $pdf->AddPage();
     $pdf->SetFont('Arial', 'B', 12);
-
-    // Encabezado del PDF
+  
     $pdf->Cell(10, 10, 'ID');
     $pdf->Cell(50, 10, 'Email');
     $pdf->Cell(20, 10, 'Nombre');
@@ -109,20 +106,18 @@ $app->get('/ventas/pdf', function (Request $request, Response $response, $args) 
                     ->withHeader('Content-Disposition', 'attachment; filename =' . $nombreArchivo)
                     ->withHeader('Content-Lenght', strlen($pdfContent));
 
-});
+})->add(\confirmarPerfilMiddleware::class . ':verificarRolAdmin');
 
-// Ruta para descargar el PDF con el listado de usuarios
+// Descargar el PDF con el listado de usuarios
 $app->get('/usuarios/pdf', function (Request $request, Response $response, $args) {
     
     $usuarios = usuarioController::traerusuarios(); 
     $nombreArchivo = "usuarios.pdf";
 
-    // Crear el PDF
     $pdf = new FPDF('L');
     $pdf->AddPage();
     $pdf->SetFont('Arial', 'B', 12);
-
-    // Encabezado del PDF
+    
     $pdf->Cell(10, 10, 'ID');
     $pdf->Cell(50, 10, 'Email');
     $pdf->Cell(20, 10, 'Usuario');
@@ -140,7 +135,7 @@ $app->get('/usuarios/pdf', function (Request $request, Response $response, $args
         $pdf->Cell(20, 10, $usuario->usuario);
         $pdf->Cell(30, 10, $usuario->contra);
         $pdf->Cell(20, 10, $usuario->tipoUsuario);
-       // Agregar la imagen al PDF (asegúrate de que la ruta de la imagen sea correcta)
+       // Agregar la imagen al PDF 
        $imagePath = __DIR__ . "/ImagenesDeUsuarios/2024/" . "agustin" . " - " . "3" . " - " . "28-07-2024" . ".png";       
        if (file_exists($imagePath)) {
            $pdf->Cell(40, 40, '', 0, 0, 'C');
@@ -161,7 +156,7 @@ $app->get('/usuarios/pdf', function (Request $request, Response $response, $args
     return $response->withHeader('Content-Type', 'application/pdf')
                 ->withHeader('Content-Disposition', 'attachment; filename =' . $nombreArchivo)
                 ->withHeader('Content-Lenght', strlen($pdfContent));
-});
+})->add(\confirmarPerfilMiddleware::class . ':verificarRolAdmin');
   
 
 $app->run();

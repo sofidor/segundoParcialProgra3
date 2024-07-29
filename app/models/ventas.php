@@ -21,7 +21,7 @@ class Venta
 
         if (Tienda::existeProductoYTipo($this->nombre, $this->tipo))
         {  
-            $this->precio = $this->obtenerPrecioProducto($this->nombre, $this->tipo);
+            $this->precio = $this->obtenerPrecioProducto($this->nombre, $this->tipo);           
 
             $consulta = $objAccesoDb->RetornarConsulta("INSERT INTO ventas (email, nombre, tipo, talle, stock, precio, foto, fecha, nroPedido) VALUES (:email, :nombre, :tipo, :talle, :stock, :precio ,:foto, :fecha, :nroPedido)");
             $consulta->bindValue(':email', $this->email, PDO::PARAM_STR);
@@ -29,7 +29,7 @@ class Venta
             $consulta->bindValue(':tipo', $this->tipo, PDO::PARAM_STR);
             $consulta->bindValue(':talle', $this->talle, PDO::PARAM_STR);
             $consulta->bindValue(':stock', $this->stock, PDO::PARAM_INT);
-            $consulta->bindValue(':precio', $this->precio, PDO::PARAM_INT);
+            $consulta->bindValue(':precio', $this->precio * $this->stock, PDO::PARAM_INT);
             $consulta->bindValue(':foto', $this->foto, PDO::PARAM_STR);
             $fecha = new DateTime(date("d-m-Y"));
             $consulta->bindValue(':fecha', date_format($fecha, 'Y-m-d'));
